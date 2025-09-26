@@ -1,0 +1,75 @@
+﻿@page "/consultar-movimentacoes"
+
+<h3>Consulta de movimentações</h3>
+<p>Pesquise suas movimentações financeiras.</p>
+<hr />
+
+@* Exibir o retorno da API *@
+@if (!string.IsNullOrEmpty(resultado))
+{
+    <div class="alert alert-primary">
+        <strong>@resultado</strong>
+    </div>
+}
+
+@* Criando a estrutura do formulário *@
+<EditForm Model="@form" OnValidSubmit="@OnSubmit">
+
+    @* Habilitar as validações do formulário *@
+    <DataAnnotationsValidator />
+
+    <div class="mb-2">
+        <label>Data de início:</label>
+        <InputText class="form-control" @bind-Value="form.DataMin" type="date" />
+        <span class="text-danger">
+            <ValidationMessage For="@(() => form.DataMin)" />
+        </span>
+    </div>
+
+    <div class="mb-2">
+        <label>Data de fim:</label>
+        <InputText class="form-control" @bind-Value="form.DataMax" type="date" />
+        <span class="text-danger">
+            <ValidationMessage For="@(() => form.DataMax)" />
+        </span>
+    </div>
+
+    <div class="mb-2">
+        <input type="submit" class="btn btn-success" value="Realizar Pesquisa" />
+    </div>
+
+</EditForm>
+
+@using FinancasApp.Web.Forms
+
+@inject HttpClient Http
+
+@code {
+
+    //Objeto para capturar os campos do formulário
+    private ConsultaForm form = new();
+
+    //Atributo para armazenar a resposta do servidor
+    private string resultado = string.Empty;
+
+    //Função para capturar o evento Submit do formulário
+    protected async Task OnSubmit()
+    {
+        try
+        {
+            var response = await Http.GetAsync($"api/movimentacoes/{form.DataMin}/{form.DataMax}");
+            if (response.IsSuccessStatusCode)
+            {
+                resultado = await response.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                resultado = "Falha ao enviar solicitação de consulta de movimentação.";
+            }
+        }
+        catch (Exception e)
+        {
+            resultado = e.Message;
+        }
+    }
+}

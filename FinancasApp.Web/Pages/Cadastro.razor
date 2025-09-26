@@ -1,0 +1,95 @@
+﻿@page "/cadastrar-movimentacoes"
+
+<h3>Cadastro de movimentações</h3>
+<p>Inclua movimentações de contas a receber ou pagar.</p>
+<hr />
+
+@* Exibir o retorno da API *@
+@if (!string.IsNullOrEmpty(resultado))
+{
+    <div class="alert alert-primary">
+        <strong>@resultado</strong>
+    </div>
+}
+
+@* Criando a estrutura do formulário *@
+<EditForm Model="@form" OnValidSubmit="@OnSubmit">
+
+    @* Habilitar as validações do formulário *@
+    <DataAnnotationsValidator />
+
+    <div class="mb-2">
+        <label>Nome da movimentação:</label>
+        <InputText class="form-control" @bind-Value="form.Nome" placeholder="Digite o nome aqui" />
+        <span class="text-danger">
+            <ValidationMessage For="@(() => form.Nome)" />
+        </span>
+    </div>
+
+    <div class="mb-2">
+        <label>Data da movimentação:</label>
+        <InputText class="form-control" @bind-Value="form.Data" type="date" />
+        <span class="text-danger">
+            <ValidationMessage For="@(() => form.Data)" />
+        </span>
+    </div>
+
+    <div class="mb-2">
+        <label>Valor da movimentação:</label>
+        <InputText class="form-control" @bind-Value="form.Valor" />
+        <span class="text-danger">
+            <ValidationMessage For="@(() => form.Valor)" />
+        </span>
+    </div>
+
+    <div class="mb-2">
+        <label>Tipo da movimentação:</label>
+        <InputSelect class="form-select" @bind-Value="form.Tipo">
+            <option value="">Escolha uma opção</option>
+            <option value="1">Conta a receber</option>
+            <option value="2">Conta a pagar</option>
+        </InputSelect>
+        <span class="text-danger">
+            <ValidationMessage For="@(() => form.Tipo)" />
+        </span>
+    </div>
+
+    <div class="mb-2">
+        <input type="submit" class="btn btn-success" value="Realizar Cadastro" />
+    </div>
+
+</EditForm>
+
+@using FinancasApp.Web.Forms
+
+@inject HttpClient Http
+
+@code {
+
+    //Objeto para capturar os campos do formulário
+    private CadastroForm form = new();
+
+    //Atributo para armazenar a resposta do servidor
+    private string resultado = string.Empty;
+
+    //Função para capturar o evento Submit do formulário
+    protected async Task OnSubmit()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/movimentacoes", form);
+            if (response.IsSuccessStatusCode)
+            {
+                resultado = await response.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                resultado = "Falha ao enviar solicitação de cadastro de movimentação.";
+            }
+        }
+        catch (Exception e)
+        {
+            resultado = e.Message;
+        }
+    }
+}
