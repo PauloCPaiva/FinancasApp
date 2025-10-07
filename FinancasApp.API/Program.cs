@@ -1,3 +1,13 @@
+using FinancasApp.Domain.Interfaces.Messages;
+using FinancasApp.Domain.Interfaces.Repositories;
+using FinancasApp.Domain.Interfaces.Services;
+using FinancasApp.Domain.Services;
+using FinancasApp.Infra.Data.Contexts;
+using FinancasApp.Infra.Data.Repositories;
+using FinancasApp.Infra.Data.Settings;
+using FinancasApp.Infra.Messages.Consumers;
+using FinancasApp.Infra.Messages.Producers;
+using FinancasApp.Infra.Messages.Settings;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +29,27 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader();
     });
 });
+
+//Ler as configurações do appsettings.json para connectionstring do banco de dados
+builder.Services.AddSingleton(builder.Configuration.GetSection("MongoDbSettings")
+       .Get<MongoDbSettings>());
+
+//Ler as configurações do appsettings.json para a mensageria do RabbitMQ
+builder.Services.AddSingleton(builder.Configuration.GetSection("RabbitMQSettings")
+       .Get<RabbitMQSettings>());
+
+//Ler as configurações do appsettings.json para o serviço de envio de email SMTP
+builder.Services.AddSingleton(builder.Configuration.GetSection("SmtpSettings")
+       .Get<SmtpSettings>());
+
+//Configurações para injeção de dependência
+builder.Services.AddTransient<IMovimentacaoRepository, MovimentacaoRepository>();
+builder.Services.AddTransient<IMovimentacaoService, MovimentacaoService>();
+builder.Services.AddTransient<IMessageProducer, MessageProducer>();
+builder.Services.AddTransient<MongoDbContext>();
+
+//Registrando as classes BackgroundService:
+builder.Services.AddHostedService<MessageConsumer>();
 
 var app = builder.Build();
 
